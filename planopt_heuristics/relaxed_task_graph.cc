@@ -20,49 +20,34 @@ RelaxedTaskGraph::RelaxedTaskGraph(const TaskProxy &task_proxy)
     */
 
     for (Proposition p: relaxed_task.propositions){
-        variable_node_ids.push_back(p.id);  
-        graph.add_node(NodeType::OR);   
+        //relaxed_task.propositions[i] == variable_node_ids[i] == graph.nodes[i]
+        variable_node_ids.push_back(p.id); 
+        graph.add_node(NodeType::OR, 0);
     }
 
-    initial_node_id = graph.add_node(NodeType::AND);
+    initial_node_id = graph.add_node(NodeType::AND, 0);
     for (PropositionID p_id : relaxed_task.initial_state){
         graph.add_edge(p_id, initial_node_id);
     }
 
-    goal_node_id = graph.add_node(NodeType::AND);
+    goal_node_id = graph.add_node(NodeType::AND, 0);
     for (PropositionID p_id : relaxed_task.goal){
         graph.add_edge(goal_node_id, p_id);
     }
 
     for (RelaxedOperator op : relaxed_task.operators){
 
-        NodeID operator_node = graph.add_node(NodeType::AND);
+        NodeID operator_node = graph.add_node(NodeType::AND, op.cost);
         
-
-        /*
-        NodeID precondition_node = graph.add_node(NodeType::AND);
+        NodeID precondition_node = graph.add_node(NodeType::AND, 0);
         for (PropositionID p_id : op.preconditions){
             graph.add_edge(precondition_node, p_id);
         }
         graph.add_edge(operator_node, precondition_node);
-        
-        NodeID effect_node = graph.add_node(NodeType::AND);
-        for (PropositionID p_id : op.effects){
-            graph.add_edge(p_id, effect_node);
-        }
-        graph.add_edge(effect_node, operator_node);
-        */
-       
-    
-        for (PropositionID p_id : op.preconditions){
-            graph.add_edge(operator_node, p_id);
-        }
 
         for (PropositionID p_id : op.effects){
             graph.add_edge(p_id, operator_node);
-        }
-        
-
+        }      
     }
 }
 
@@ -94,7 +79,8 @@ int RelaxedTaskGraph::additive_cost_of_goal() {
     // to return the h^add value of the goal node.
 
     // TODO: add your code for exercise 2 (c) here.
-    return -1;
+    graph.weighted_most_conservative_valuation();
+    return graph.get_node(goal_node_id).additive_cost;
 }
 
 int RelaxedTaskGraph::ff_cost_of_goal() {

@@ -133,6 +133,64 @@ void AndOrGraph::weighted_most_conservative_valuation() {
     /*
       TODO: add your code for exercise 2 (c) here.
     */
+
+   struct CostComparator{
+    bool operator()(AndOrGraphNode &l, AndOrGraphNode &r){
+        return l.additive_cost < r.additive_cost;
+    }
+   };
+
+    priority_queue<AndOrGraphNode, vector<AndOrGraphNode>, CostComparator> queue = priority_queue<AndOrGraphNode, vector<AndOrGraphNode>, CostComparator>();
+    
+    for (AndOrGraphNode node : nodes) {
+        node.forced_true = false;
+        node.num_forced_successors = 0;
+        if (node.type == NodeType::AND && node.successor_ids.empty()) {
+            node.additive_cost = 0;
+            queue.push(node);
+        } else {
+            node.additive_cost = std::numeric_limits<int>::max();
+        }
+    }
+
+    while(!queue.empty()){
+
+        AndOrGraphNode current_node = queue.top();
+        current_node.forced_true = true;
+        
+        for(NodeID predecessor_id : current_node.predecessor_ids){
+            nodes[predecessor_id].num_forced_successors += 1;
+
+            AndOrGraphNode predecessor_node = get_node(predecessor_id);
+
+            if(predecessor_node.type == NodeType::AND){
+
+                /*
+                To compute h_max we would get all the additive_cost + direct_costs
+                of the successors of predecessor_node and set
+                nodes[predecessor_id].additive_cost = MAX of all those values.
+                */
+
+                int sum_cost_sucessors = 0;
+                for(NodeID sucessor_id : predecessor_node.successor_ids){
+                    AndOrGraphNode successor_node = get_node(sucessor_id);
+                    sum_cost_sucessors += successor_node.additive_cost + successor_node.direct_cost;
+                }
+                nodes[predecessor_id].additive_cost = sum_cost_sucessors;
+                queue.push(nodes[predecessor_id]);
+
+            }
+            else if(predecessor_node.type == NodeType::OR 
+            && predecessor_node.additive_cost > predecessor_node.direct_cost + current_node.additive_cost){
+                nodes[predecessor_id].additive_cost = predecessor_node.direct_cost + current_node.additive_cost;
+                queue.push(nodes[predecessor_id]);
+            }
+        }
+
+        queue.pop();
+    }
+
+
 }
 
 void add_nodes(vector<string> names, NodeType type, AndOrGraph &g, unordered_map<string, NodeID> &ids) {
