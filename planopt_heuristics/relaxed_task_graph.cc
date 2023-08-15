@@ -19,9 +19,9 @@ RelaxedTaskGraph::RelaxedTaskGraph(const TaskProxy &task_proxy)
         - the graph should contain all necessary edges.
     */
 
-    for (Proposition p: relaxed_task.propositions){
+    for(int i = 0; i < (int) relaxed_task.propositions.size(); i++){
         //relaxed_task.propositions[i] == variable_node_ids[i] == graph.nodes[i]
-        variable_node_ids.push_back(p.id); 
+        variable_node_ids[i] = relaxed_task.propositions[i].id;    
         graph.add_node(NodeType::OR, 0);
     }
 
@@ -37,16 +37,17 @@ RelaxedTaskGraph::RelaxedTaskGraph(const TaskProxy &task_proxy)
 
     for (RelaxedOperator op : relaxed_task.operators){
 
-        NodeID operator_node = graph.add_node(NodeType::AND, op.cost);
+        NodeID effect_node = graph.add_node(NodeType::AND, op.cost);
         
-        NodeID precondition_node = graph.add_node(NodeType::AND, 0);
+        NodeID formula_node = graph.add_node(NodeType::AND, 0);
         for (PropositionID p_id : op.preconditions){
-            graph.add_edge(precondition_node, p_id);
+            graph.add_edge(formula_node, p_id);
         }
-        graph.add_edge(operator_node, precondition_node);
+        graph.add_edge(effect_node, formula_node);
 
+        //For every conditional effect in the operator, there is an arc from variable node n_v to the effect node
         for (PropositionID p_id : op.effects){
-            graph.add_edge(p_id, operator_node);
+            graph.add_edge(p_id, effect_node);
         }      
     }
 }

@@ -163,15 +163,15 @@ void AndOrGraph::weighted_most_conservative_valuation() {
 
             AndOrGraphNode predecessor_node = get_node(predecessor_id);
 
-            if(predecessor_node.type == NodeType::AND){
-
+            if(predecessor_node.type == NodeType::AND 
+            && predecessor_node.num_forced_successors == (int) predecessor_node.successor_ids.size()){
                 /*
                 To compute h_max we would get all the additive_cost + direct_costs
                 of the successors of predecessor_node and set
                 nodes[predecessor_id].additive_cost = MAX of all those values.
                 */
 
-                int sum_cost_sucessors = 0;
+                int sum_cost_sucessors = predecessor_node.direct_cost;
                 for(NodeID sucessor_id : predecessor_node.successor_ids){
                     AndOrGraphNode successor_node = get_node(sucessor_id);
                     sum_cost_sucessors += successor_node.additive_cost + successor_node.direct_cost;
@@ -186,11 +186,8 @@ void AndOrGraph::weighted_most_conservative_valuation() {
                 queue.push(nodes[predecessor_id]);
             }
         }
-
         queue.pop();
     }
-
-
 }
 
 void add_nodes(vector<string> names, NodeType type, AndOrGraph &g, unordered_map<string, NodeID> &ids) {
