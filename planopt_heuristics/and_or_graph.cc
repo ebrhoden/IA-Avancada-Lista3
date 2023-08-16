@@ -81,7 +81,8 @@ void AndOrGraph::most_conservative_valuation() {
         AndOrGraphNode current_node = get_node(queue.front());
         already_expanded.insert(current_node.id);
         nodes[current_node.id].forced_true = true;
-        
+        queue.pop_front();
+
         for(NodeID predecessor_id : current_node.predecessor_ids){
             nodes[predecessor_id].num_forced_successors += 1;
 
@@ -100,8 +101,6 @@ void AndOrGraph::most_conservative_valuation() {
                 }
             }
         }
-
-        queue.pop_front();
     }
 
 }
@@ -134,15 +133,17 @@ void AndOrGraph::weighted_most_conservative_valuation() {
       TODO: add your code for exercise 2 (c) here.
     */
 
+
+
    struct CostComparator{
     bool operator()(AndOrGraphNode &l, AndOrGraphNode &r){
-        return l.additive_cost < r.additive_cost;
+        return r.additive_cost < l.additive_cost;
     }
    };
 
     priority_queue<AndOrGraphNode, vector<AndOrGraphNode>, CostComparator> queue = priority_queue<AndOrGraphNode, vector<AndOrGraphNode>, CostComparator>();
     
-    for (AndOrGraphNode node : nodes) {
+    for (AndOrGraphNode &node : nodes) {
         node.forced_true = false;
         node.num_forced_successors = 0;
         if (node.type == NodeType::AND && node.successor_ids.empty()) {
@@ -157,6 +158,7 @@ void AndOrGraph::weighted_most_conservative_valuation() {
 
         AndOrGraphNode current_node = queue.top();
         current_node.forced_true = true;
+        queue.pop();        
         
         for(NodeID predecessor_id : current_node.predecessor_ids){
             nodes[predecessor_id].num_forced_successors += 1;
@@ -174,7 +176,7 @@ void AndOrGraph::weighted_most_conservative_valuation() {
                 int sum_cost_sucessors = predecessor_node.direct_cost;
                 for(NodeID sucessor_id : predecessor_node.successor_ids){
                     AndOrGraphNode successor_node = get_node(sucessor_id);
-                    sum_cost_sucessors += successor_node.additive_cost + successor_node.direct_cost;
+                    sum_cost_sucessors += successor_node.additive_cost;
                 }
                 nodes[predecessor_id].additive_cost = sum_cost_sucessors;
                 queue.push(nodes[predecessor_id]);
@@ -182,11 +184,12 @@ void AndOrGraph::weighted_most_conservative_valuation() {
             }
             else if(predecessor_node.type == NodeType::OR 
             && predecessor_node.additive_cost > predecessor_node.direct_cost + current_node.additive_cost){
+                //ps: if it is an OR node it has direct_cost == ZERO
                 nodes[predecessor_id].additive_cost = predecessor_node.direct_cost + current_node.additive_cost;
                 queue.push(nodes[predecessor_id]);
             }
         }
-        queue.pop();
+
     }
 }
 
