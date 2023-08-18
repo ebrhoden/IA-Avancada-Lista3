@@ -79,10 +79,15 @@ void AndOrGraph::most_conservative_valuation() {
     while(!queue.empty()){
 
         AndOrGraphNode current_node = get_node(queue.front());
-        already_expanded.insert(current_node.id);
-        nodes[current_node.id].forced_true = true;
         queue.pop_front();
 
+        if(already_expanded.find(current_node.id) != already_expanded.end()){
+            continue;
+        }
+        
+        already_expanded.insert(current_node.id);
+        nodes[current_node.id].forced_true = true;
+        
         for(NodeID predecessor_id : current_node.predecessor_ids){
             nodes[predecessor_id].num_forced_successors += 1;
 
@@ -92,8 +97,7 @@ void AndOrGraph::most_conservative_valuation() {
             predecessor_node.num_forced_successors == (int) predecessor_node.successor_ids.size()){
                 if(already_expanded.find(predecessor_id) == already_expanded.end()){
                     queue.push_back(predecessor_id);
-                }
-                
+                }   
             }
             else if(predecessor_node.type == NodeType::OR){
                 if(already_expanded.find(predecessor_id) == already_expanded.end()){
@@ -187,6 +191,9 @@ void AndOrGraph::weighted_most_conservative_valuation() {
                 //ps: if it is an OR node it has direct_cost == ZERO
                 nodes[predecessor_id].additive_cost = predecessor_node.direct_cost + current_node.additive_cost;
                 queue.push(nodes[predecessor_id]);
+
+                //Needed to compute FF
+                nodes[predecessor_id].achiever = current_node.id;
             }
         }
 

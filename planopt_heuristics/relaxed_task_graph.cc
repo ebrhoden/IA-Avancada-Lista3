@@ -2,6 +2,8 @@
 
 #include <iostream>
 #include <vector>
+#include <queue>
+#include <limits> 
 
 using namespace std;
 
@@ -86,7 +88,49 @@ int RelaxedTaskGraph::additive_cost_of_goal() {
 
 int RelaxedTaskGraph::ff_cost_of_goal() {
     // TODO: add your code for exercise 2 (e) here.
-    return -1;
-}
+    graph.weighted_most_conservative_valuation();
 
+    unordered_set<NodeID> already_expanded;
+    queue<NodeID> queue;
+    int sum_cost_effects = 0;
+
+    queue.push(goal_node_id);
+
+    while(!queue.empty()){
+        AndOrGraphNode current_node = graph.get_node(queue.front());
+        queue.pop();
+
+        
+        if(already_expanded.find(current_node.id) != already_expanded.end()){
+            continue;
+        }
+
+        already_expanded.insert(current_node.id);
+        
+        if(current_node.type == NodeType::AND){
+
+            //Every successor will be expanded
+            for(NodeID successor_id : current_node.successor_ids){
+                AndOrGraphNode successor_node = graph.get_node(successor_id);
+
+                if(already_expanded.find(successor_id) == already_expanded.end()){
+                    queue.push(successor_id);  
+                }   
+            }
+        }
+        else if(current_node.type == NodeType::OR){
+            //Only achiever will be expanded
+            if(already_expanded.find(current_node.achiever) == already_expanded.end()){
+                queue.push(current_node.achiever);
+            }
+        }
+    }
+
+    for(NodeID node_id : already_expanded){
+        sum_cost_effects += graph.get_node(node_id).direct_cost;
+    }
+
+    return sum_cost_effects;
+
+}
 }
